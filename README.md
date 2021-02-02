@@ -334,6 +334,110 @@ Format:
 | `TouchIDError` | User selected fallback not enrolled | `FALLBACK_NOT_ENROLLED` |
 | `TouchIDError` | Unknown error                       | `UNKNOWN_ERROR`         |
 
+
+## EDIT ALERT INTO FUCNTION
+#example:
+```
+const App = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [authen, setAuthen] = useState('');
+
+  const openTouchId = () => {
+    setShowModal(true);
+    TouchID.authenticate()
+      .then((success) => {
+        console.log({success});
+        processTouch(success);
+      })
+      .catch((error) => {
+        console.log({error});
+        processTouch(error);
+      });
+  };
+
+  const closeModal = () => {
+    authen === '' && TouchID.cancelled();
+    setShowModal(false);
+    setAuthen('');
+  };
+
+  const processTouch = (result) => {
+    setAuthen(result ? 'success' : 'failed');
+  };
+
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.button} onPress={openTouchId}>
+          <Text style={styles.buttonText}>Hello</Text>
+        </TouchableOpacity>
+        <Modal
+          isVisible={showModal}
+          onBackdropPress={closeModal}
+          backdropOpacity={0.3}>
+          <View style={styles.modal}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+              }}>
+              verify your touch
+            </Text>
+            <Image
+              style={[
+                styles.authenImage,
+                authen === 'success' && styles.authenImageSuccess,
+                authen === 'failed' && styles.authenImageFailed,
+              ]}
+              source={require('./images/authenFinger.png')}
+            />
+            <Text>
+              {authen !== '' ? authen : 'Please use your finger to verify'}
+            </Text>
+          </View>
+        </Modal>
+      </View>
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  buttonText: {
+    fontSize: 30,
+    color: 'white',
+  },
+  button: {
+    backgroundColor: 'blue',
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+  modal: {
+    width: 300,
+    height: 200,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignSelf: 'center',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  authenImage: {
+    width: 100,
+    height: 100,
+  },
+  authenImageSuccess: {tintColor: 'green'},
+  authenImageFailed: {tintColor: 'red'},
+});
+```
+
 ## License
 
 Copyright (c) 2015, [Naoufal Kadhom](http://naoufal.com/)
