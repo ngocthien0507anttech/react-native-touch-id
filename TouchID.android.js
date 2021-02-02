@@ -1,62 +1,38 @@
-import { NativeModules, processColor } from 'react-native';
-import { androidApiErrorMap, androidModuleErrorMap } from './data/errors';
-import { getError, TouchIDError, TouchIDUnifiedError } from './errors';
+import { NativeModules } from "react-native";
 const NativeTouchID = NativeModules.FingerprintAuth;
 
 export default {
-  isSupported(config) {
+  isSupported() {
     return new Promise((resolve, reject) => {
       NativeTouchID.isSupported(
         (error, code) => {
-          return reject(createError(config, error, code));
+          console.log(error, code);
+          return reject(false);
         },
-        (biometryType) => {
-          return resolve(biometryType);
+        (success) => {
+          console.log(success);
+          return resolve(true);
         }
       );
     });
   },
 
-  authenticate(reason, config) {
-    var DEFAULT_CONFIG = {
-      title: 'Authentication Required',
-      imageColor: '#1306ff',
-      imageErrorColor: '#ff0000',
-      sensorDescription: 'Touch sensor',
-      sensorErrorDescription: 'Failed',
-      cancelText: 'Cancel',
-      unifiedErrors: false
-    };
-    var authReason = reason ? reason : ' ';
-    var authConfig = Object.assign({}, DEFAULT_CONFIG, config);
-    var imageColor = processColor(authConfig.imageColor);
-    var imageErrorColor = processColor(authConfig.imageErrorColor);
-
-    authConfig.imageColor = imageColor;
-    authConfig.imageErrorColor = imageErrorColor;
-
+  authenticate() {
     return new Promise((resolve, reject) => {
       NativeTouchID.authenticate(
-        authReason,
-        authConfig,
         (error, code) => {
-          return reject(createError(authConfig, error, code));
+          console.log(error, code);
+          return reject(false);
         },
-        success => {
+        (success) => {
+          console.log(success);
           return resolve(true);
         }
       );
     });
-  }
+  },
+
+  cancelled() {
+    NativeTouchID.cancelled();
+  },
 };
-
-function createError(config, error, code) {
-  const { unifiedErrors } = config || {};
-  const errorCode = androidApiErrorMap[code] || androidModuleErrorMap[code];
-
-  if (unifiedErrors) {
-    return new TouchIDUnifiedError(getError(errorCode));
-  }
-
-  return new TouchIDError('Touch ID Error', error, errorCode);
-}

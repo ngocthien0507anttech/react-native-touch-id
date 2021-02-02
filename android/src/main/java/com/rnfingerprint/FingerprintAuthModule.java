@@ -23,6 +23,8 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     private KeyguardManager keyguardManager;
     private boolean isAppActive;
 
+    private FingerprintHandler mFingerprintHandler;
+
     public static boolean inProgress = false;
 
     public FingerprintAuthModule(final ReactApplicationContext reactContext) {
@@ -59,10 +61,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
 
         int result = isFingerprintAuthAvailable();
         if (result == FingerprintAuthConstants.IS_SUPPORTED) {
-            // TODO: once this package supports Android's Face Unlock,
-            // implement a method to find out which type of biometry
-            // (not just fingerprint) is actually supported
-            reactSuccessCallback.invoke("Fingerprint");
+            reactSuccessCallback.invoke("Is supported.");
         } else {
             reactErrorCallback.invoke("Not supported.", result);
         }
@@ -70,15 +69,18 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
 
     @TargetApi(Build.VERSION_CODES.M)
     @ReactMethod
-    public void authenticate(final String reason, final ReadableMap authConfig, final Callback reactErrorCallback, final Callback reactSuccessCallback) {
+    public void authenticate(final Callback reactErrorCallback, final Callback reactSuccessCallback) {
         final Activity activity = getCurrentActivity();
+        System.out.println("go");
         if (inProgress || !isAppActive || activity == null) {
+            System.out.println("return 1");
             return;
         }
         inProgress = true;
 
         int availableResult = isFingerprintAuthAvailable();
         if (availableResult != FingerprintAuthConstants.IS_SUPPORTED) {
+            System.out.println("return 2");
             inProgress = false;
             reactErrorCallback.invoke("Not supported", availableResult);
             return;
@@ -87,6 +89,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
         /* FINGERPRINT ACTIVITY RELATED STUFF */
         final Cipher cipher = new FingerprintCipher().getCipher();
         if (cipher == null) {
+            System.out.println("return 3");
             inProgress = false;
             reactErrorCallback.invoke("Not supported", FingerprintAuthConstants.NOT_AVAILABLE);
             return;
@@ -99,18 +102,23 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
 
         final DialogResultHandler drh = new DialogResultHandler(reactErrorCallback, reactSuccessCallback);
 
-        final FingerprintDialog fingerprintDialog = new FingerprintDialog();
-        fingerprintDialog.setCryptoObject(cryptoObject);
-        fingerprintDialog.setReasonForAuthentication(reason);
-        fingerprintDialog.setAuthConfig(authConfig);
-        fingerprintDialog.setDialogCallback(drh);
+        this.mFingerprintHandler = new FingerprintHandler(activity, drh);
+
+        System.out.println("runnnnnnnnnn");
+
+        this.mFingerprintHandler.startAuth(cryptoObject);
 
         if (!isAppActive) {
+            System.out.println("return 4");
             inProgress = false;
             return;
         }
+    }
 
-        fingerprintDialog.show(activity.getFragmentManager(), FRAGMENT_TAG);
+    @ReactMethod
+    public void cancelled() {
+        this.mFingerprintHandler.endAuth();
+        inProgress = false;
     }
 
     private int isFingerprintAuthAvailable() {

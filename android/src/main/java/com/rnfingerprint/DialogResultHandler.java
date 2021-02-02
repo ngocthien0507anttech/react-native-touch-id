@@ -2,7 +2,7 @@ package com.rnfingerprint;
 
 import com.facebook.react.bridge.Callback;
 
-public class DialogResultHandler implements FingerprintDialog.DialogResultListener {
+public class DialogResultHandler implements FingerprintHandler.Callback {
     private Callback errorCallback;
     private Callback successCallback;
 
